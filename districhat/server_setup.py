@@ -18,7 +18,7 @@ def main():
     _logger.info("Starting up...")
     os.chdir(SERVER_DIR)
 
-    call = ["mv", SERVER_DIR + SERVICE_FILE, SYSTEMD_SERVICE_LOCATION]
+    call = ["sudo", "mv", SERVER_DIR + SERVICE_FILE, SYSTEMD_SERVICE_LOCATION]
     subprocess.run(call, check=True)
     _logger.info("Added the service file to services.")
 
