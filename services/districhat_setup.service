@@ -1,0 +1,11 @@
+[Unit]
+Description=DistriChat Installer
+After=multi-user.target
+
+[Service]
+Type=oneshot
+User=tonibom
+ExecStart=/usr/bin/python3 /opt/districhat/setup_service.py
+
+[Install]
+WantedBy=multi-user.target
