@@ -80,7 +80,7 @@ def client_address_for(nickname: str) -> str:
 
 @app.route("/ping")
 def ping():
-    return "pong\n"
+    return "pongers\n"
 
 
 @app.route("/send-message", methods=["POST"])
