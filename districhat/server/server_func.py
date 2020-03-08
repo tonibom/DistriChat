@@ -3,23 +3,49 @@ the web requests can be implemented separately. This modular separation allows
 for changing to using different frameworks for the actual server request handler
 implementation whilst keeping the server functionality intact.
 """
+import datetime
 import logging
 import random
 import string
 
+from typing import Sequence, Tuple
+
+import zmq
+
 # TODO: Placeholder
-ACCOUNTS = {"cookie1": "Janne",
-            "cookie2": "Metsuri",
-            "cookie3": "Pirkka-Pekka",
-            }
+ACCOUNTS = {}
 COOKIE_LENGTH = 10
+EPOCH = datetime.datetime(1970, 1, 1)
+ZMQ_BIND_ADDRESS = "tcp://0.0.0.0"
 
 _logger = logging.getLogger("SERVER-FUNCTIONS")
 
 
-def add_message(chatroom, nickname, message):
-    # Publish & store
-    return
+class AccountNotFoundException(Exception):
+    pass
+
+
+class Message:
+    def __init__(self, timestamp: float, nickname: str, message_str: str):
+        self.timestamp = timestamp
+        self.sender = nickname
+        self.message = message_str
+
+    def formatted(self) -> str:
+        time_str = datetime.datetime.fromtimestamp(self.timestamp).isoformat()
+        return " -- ".join([time_str, self.sender, self.message])
+
+
+class MessageQueue:
+    def __init__(self):
+        self.messages = []
+
+    def add_message(self, message: Message):
+        self.messages.append(message)
+
+    def get_messages_formatted(self) -> Sequence[str]:
+        formatted_messages = [msg.formatted() for msg in self.messages]
+        return formatted_messages
 
 
 def claim_nickname(nickname: str, cookie: str) -> str:
@@ -48,12 +74,49 @@ def claim_nickname(nickname: str, cookie: str) -> str:
     return response_msg
 
 
+def create_publish_socket() -> Tuple[zmq.Socket, int]:
+    context = zmq.Context()
+    socket = context.socket(zmq.PUB)
+    port = socket.bind_to_random_port(ZMQ_BIND_ADDRESS, min_port=49152, max_port=65536, max_tries=100)
+    _logger.info("Created a ZMQ PUB TCP socket on port %s", port)
+    return socket, port
+
+
 def generate_cookie() -> str:
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(COOKIE_LENGTH)])
 
 
-def get_chat_history():
-    return
+def get_chat_history(message_queue: MessageQueue) -> Sequence[str]:
+    return message_queue.get_messages_formatted()
+
+
+def _get_nickname(cookie: str) -> str:
+    if cookie not in ACCOUNTS.keys():
+        raise AccountNotFoundException("No nickname claimed for cookie")
+    return ACCOUNTS[cookie]
+
+
+def _get_timestamp() -> float:
+    time_now = datetime.datetime.now()
+    return (time_now - EPOCH) / datetime.timedelta(seconds=1)
+
+
+def _publish_message(message: Message, publish_socket: zmq.Socket):
+    message_str = message.formatted()
+    _logger.info("CHAT: {}".format(message_str))
+    publish_socket.send_string("ALL {}".format(message_str))
+
+
+def send_message(cookie: str,
+                 message_str: str,
+                 message_queue: MessageQueue,
+                 publish_socket: zmq.Socket):
+    # Publish & store
+    msg_timestamp = _get_timestamp()
+    nickname = _get_nickname(cookie)
+    message = Message(msg_timestamp, nickname, message_str)
+    message_queue.add_message(message)
+    _publish_message(message, publish_socket)
 
 
 def subscribe(chatroom: str):
