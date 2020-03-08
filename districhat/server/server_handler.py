@@ -117,17 +117,10 @@ def send_message() -> Response:
 
 
 @app.route("/join")
-def subscribe_channel(channel: str):
-    # Client joins the channel specified (if it exists)
-    # Address for connecting to PUB/SUB socket is returned
-    return
-
-
-@app.route("/synchronize")
-def synchronize(timestamp: int):
-    # Handle synchronization of clocks
-    # Could omit this
-    return
+def subscribe_channel() -> Response:
+    # TODO: Could keep track of subscribed clients?
+    resp = make_response(str(port) + "\n")
+    return resp
 
 
 if __name__ == "__main__":

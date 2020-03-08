@@ -117,13 +117,3 @@ def send_message(cookie: str,
     message = Message(msg_timestamp, nickname, message_str)
     message_queue.add_message(message)
     _publish_message(message, publish_socket)
-
-
-def subscribe(chatroom: str):
-    # Not entirely sure how this'll evolve, but this is here as a reminder
-    return
-
-
-def synchronize():
-    # Could omit this
-    return
