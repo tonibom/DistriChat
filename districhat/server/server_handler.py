@@ -5,6 +5,8 @@ server_func.
 import json
 import logging
 
+from typing import Optional
+
 from flask import Flask
 from flask import make_response
 from flask import request
@@ -31,7 +33,7 @@ def claim_nick() -> Response:
 
     # nickname = request.args.get("nickname", "")
     nickname = request.form["nickname"]
-    cookie = request.cookies.get("cookie")
+    cookie = get_cookie(request.cookies)
 
     if nickname is "":
         _logger.debug("Request missing nickname!")
@@ -78,6 +80,15 @@ def client_address_for(nickname: str) -> str:
     return ""
 
 
+def get_cookie(cookies) -> Optional[str]:
+    if len(cookies) == 0:
+        # No cookie set
+        return None
+    cookie = [a for a in cookies.keys()][0]
+    _logger.info("Cookie: %s", cookie)
+    return cookie
+
+
 @app.route("/ping")
 def ping():
     return "pongers\n"
@@ -95,7 +106,7 @@ def send_message() -> Response:
         return error_resp
 
     message = request.form["message"]
-    cookie = request.cookies.get("cookie")
+    cookie = get_cookie(request.cookies)
 
     if cookie is None:
         _logger.debug("Request missing cookie!")

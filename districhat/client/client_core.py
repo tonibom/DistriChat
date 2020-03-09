@@ -5,16 +5,17 @@ the communication with the server.
 import ipaddress
 import json
 import logging
-import urllib.error
-import urllib.request
 
-from typing import Optional, Sequence
+from urllib import error, parse, request
+
+from typing import Optional, Sequence, Tuple
 
 import interface
 from interface import MenuOptions
 
 _logger = logging.getLogger("CLIENT")
 SERVER_PORT = 5000
+TIMEOUT = 5.0
 
 
 def _chat_history(command_in: MenuOptions,
@@ -32,12 +33,59 @@ def _chat_history(command_in: MenuOptions,
         return
 
     url = "http://" + server_address + ":" + str(SERVER_PORT) + "/chat-history"
-    reply = urllib.request.urlopen(url, timeout=5.0).read()
+
+    try:
+        reply = request.urlopen(url, timeout=TIMEOUT).read()
+    except error.URLError as e:
+        _logger.warning("Unhandled exception in chat history: %s", e)
+        reply = e.reason
+
     try:
         messages = json.loads(reply)
         interface.print_chat_log(messages)
     except json.decoder.JSONDecodeError:
-        interface.unexpected_response(reply)
+        interface.unexpected_response(reply.decode("ascii"))
+
+
+def _claim_nickname(command_in: MenuOptions,
+                    parameters_in: Sequence[str],
+                    server_address: str,
+                    cookie_in: str) -> Tuple[Optional[str], Optional[str]]:
+    _logger.debug("Claiming nickname")
+
+    if len(parameters_in) != 1:
+        interface.invalid_parameter_count(command_in,
+                                          parameters_in)
+        return None, None
+
+    if server_address is None:
+        interface.missing_server_address()
+        return None, None
+
+    nickname = parameters_in[0]
+    cookie = None
+    url = "http://" + server_address + ":" + str(SERVER_PORT) + "/claim-nick"
+
+    try:
+        contents = parse.urlencode({"nickname": nickname}).encode("ascii")
+        headers = {}
+        if cookie_in is not None:
+            headers = {"cookie": cookie_in}
+        req = request.Request(url, data=contents, headers=headers)
+        reply = request.urlopen(req, timeout=TIMEOUT)
+        reply_msg = reply.read().decode("ascii")
+        cookie = reply.getheader("Set-Cookie").split("; ")[0].lstrip("cookie=")
+    except error.URLError as e:
+        # Logging & interface message work as expected so only need to set message
+        _logger.warning("Unhandled exception in nickname claim: %s", e)
+        reply_msg = e.reason
+
+    if cookie is None:
+        _logger.warning("No cookie provided or crash before reading cookie")
+        interface.unexpected_response(reply_msg)
+        return None, None
+    interface.nickname_claimed(reply_msg)
+    return cookie, nickname
 
 
 def _help(command_in: MenuOptions, parameters_in: Sequence[str]):
@@ -60,17 +108,17 @@ def _ping_server(server_ip: str) -> bool:
     _logger.debug("Pinging server")
     url = "http://" + server_ip + ":" + str(SERVER_PORT) + "/ping"
     try:
-        reply = urllib.request.urlopen(url, timeout=5.0).read().decode("ascii")
-    except urllib.error.URLError:
+        reply_msg = request.urlopen(url, timeout=TIMEOUT).read().decode("ascii")
+    except error.URLError as e:
         # Logging & interface message work as expected so only need to set message
-        reply = "Connection refused"
+        reply_msg = e
 
-    if reply == "pongers\n":
+    if reply_msg == "pongers\n":
         # Server responded as expected
         _logger.info("Server at {} responded accordingly.".format(server_ip))
         return True
     _logger.info("The server {} responded unexpectedly: {}".format(server_ip,
-                                                                   reply))
+                                                                   reply_msg))
     interface.invalid_server_address(server_ip)
     return False
 
@@ -84,6 +132,7 @@ def run():
                         format="%(asctime)s:%(levelname)s: %(message)s")
 
     # TODO: Check local storage for nickname & cookie and server address
+    cookie = None
     nickname = None
     server_address = None
 
@@ -105,8 +154,10 @@ def run():
             _chat_history(command_in, parameters_in, server_address)
 
         elif command_in == MenuOptions.CLAIM_NICKNAME:
-            # _claim_nickname(command_in, parameters_in)
-            pass
+            cookie, nickname = _claim_nickname(command_in,
+                                               parameters_in,
+                                               server_address,
+                                               cookie)
 
         elif command_in == MenuOptions.JOIN_SERVER:
             # _join_server(command_in, parameters_in)
@@ -126,13 +177,13 @@ def _set_server(command_in: MenuOptions, parameters_in: Sequence[str]) -> Option
     if len(parameters_in) != 1:
         interface.invalid_parameter_count(command_in,
                                           parameters_in)
-        return
+        return None
     server_ip = parameters_in[0]
     try:
         ipaddress.ip_address(server_ip)
     except ValueError:
         interface.invalid_ip_address(server_ip)
-        return
+        return None
     if _ping_server(server_ip):
         _logger.info("Set server address to {}".format(server_ip))
         return server_ip

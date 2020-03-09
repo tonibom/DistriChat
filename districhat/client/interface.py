@@ -162,6 +162,10 @@ def missing_server_address():
     print("\nNo server address set! Set the server address using the SERVER command.")
 
 
+def nickname_claimed(reply_msg: str):
+    print(reply_msg)
+
+
 def _print_available_commands():
     print("\nAvailable commands:")
     for i in _MENU_COMMAND_INFO.values():
@@ -224,8 +228,8 @@ def print_help(command_in: MenuOptions = None):
         print("\n")
 
 
-def unexpected_response(reply: bytes):
-    print("The server responded unexpectedly: {}", reply.decode("ascii"))
+def unexpected_response(reply: str):
+    print("The server responded unexpectedly: {}".format(reply))
 
 
 def welcome():
