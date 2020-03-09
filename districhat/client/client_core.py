@@ -164,12 +164,56 @@ def run():
             pass
 
         elif command_in == MenuOptions.SEND_MESSAGE:
-            # _send_message(command_in, parameters_in)
+            _send_message(command_in, parameters_in, server_address, cookie)
             pass
 
         elif command_in == MenuOptions.HELP:
             _help(command_in, parameters_in)
     interface.exit_application()
+
+
+def _send_message(command_in: MenuOptions,
+                  parameters_in: Sequence[str],
+                  server_address: str,
+                  cookie_in: str):
+    _logger.debug("Sending message")
+    if len(parameters_in) == 0:
+        interface.invalid_parameter_count(command_in,
+                                          parameters_in)
+        return
+
+    if server_address is None:
+        interface.missing_server_address()
+        return
+
+    if cookie_in is None:
+        interface.missing_nickname()
+        return
+
+    message = " ".join(parameters_in)
+    cookie = None
+    url = "http://" + server_address + ":" + str(SERVER_PORT) + "/send-message"
+
+    try:
+        contents = parse.urlencode({"message": message}).encode("ascii")
+        headers = {}
+        if cookie_in is not None:
+            headers = {"cookie": cookie_in}
+        req = request.Request(url, data=contents, headers=headers)
+        reply = request.urlopen(req, timeout=TIMEOUT)
+        reply_msg = reply.read().decode("ascii")
+        cookie = reply.getheader("Set-Cookie").split("; ")[0].lstrip("cookie=")
+    except error.URLError as e:
+        # Logging & interface message work as expected so only need to set message
+        _logger.warning("Unhandled exception in message sending: %s", e)
+        reply_msg = e.reason
+
+    if cookie is None:
+        _logger.warning("No cookie provided or crash before reading cookie")
+        interface.unexpected_response(reply_msg)
+        return
+    interface.message_sent(reply_msg)
+    return
 
 
 def _set_server(command_in: MenuOptions, parameters_in: Sequence[str]) -> Optional[str]:

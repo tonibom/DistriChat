@@ -158,11 +158,20 @@ def main_menu() -> Optional[Tuple[MenuOptions, Sequence[str]]]:
             print("Invalid command. Use command 'HELP' for help on commands.")
 
 
+def missing_nickname():
+    print("\nNo nickname set! You need to claim nickname before sending messages. "
+          + "Use NICKNAME command to claim nickname.\n")
+
+
 def missing_server_address():
     print("\nNo server address set! Set the server address using the SERVER command.")
 
 
 def nickname_claimed(reply_msg: str):
+    print(reply_msg)
+
+
+def message_sent(reply_msg: str):
     print(reply_msg)
 
 
