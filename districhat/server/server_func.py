@@ -14,7 +14,7 @@ import zmq
 
 # TODO: Placeholder
 ACCOUNTS = {}
-COOKIE_LENGTH = 10
+COOKIE_LENGTH = 128
 EPOCH = datetime.datetime(1970, 1, 1)
 ZMQ_BIND_ADDRESS = "tcp://0.0.0.0"
 
@@ -83,7 +83,11 @@ def create_publish_socket() -> Tuple[zmq.Socket, int]:
 
 
 def generate_cookie() -> str:
-    return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(COOKIE_LENGTH)])
+    while True:
+        cookie = ''.join([random.choice(string.ascii_letters + string.digits) for i in range(COOKIE_LENGTH)])
+        if cookie not in ACCOUNTS.keys():
+            # Make sure there are no duplicates
+            return cookie
 
 
 def get_chat_history(message_queue: MessageQueue) -> Sequence[str]:

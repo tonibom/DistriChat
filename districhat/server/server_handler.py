@@ -17,8 +17,9 @@ import server_func as functions
 MESSAGE_QUEUE = functions.MessageQueue()
 publish_port = None
 publish_socket = None
+SERVER_PORT = 97632
 
-app = Flask(__name__)
+app = Flask("DistriChat")
 _logger = logging.getLogger("SERVER")
 
 
@@ -138,4 +139,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG,
                         format="%(asctime)s:%(levelname)s: %(message)s")
     publish_socket, port = functions.create_publish_socket()
-    app.run()
+    app.run(host="0.0.0.0", port=SERVER_PORT)

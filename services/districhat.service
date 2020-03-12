@@ -7,7 +7,7 @@ Type=simple
 User=tonibom
 Restart=on-failure
 RestartSec=1
-ExecStart=/usr/bin/python3 /home/tonibom/DistriChat/districhat/server/test_service.py
+ExecStart=/usr/bin/python3 /home/tonibom/DistriChat/districhat/server/server_handler.py
 
 [Install]
 WantedBy=multi-user.target
