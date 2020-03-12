@@ -6,16 +6,16 @@ import ipaddress
 import json
 import logging
 
-from urllib import error, parse, request
-
 from typing import Optional, Sequence, Tuple
+from urllib import error, parse, request
 
 import interface
 from interface import MenuOptions
 
-_logger = logging.getLogger("CLIENT")
 SERVER_PORT = 5000
 TIMEOUT = 5.0
+
+_logger = logging.getLogger("CLIENT")
 
 
 def _chat_history(command_in: MenuOptions,
@@ -24,8 +24,7 @@ def _chat_history(command_in: MenuOptions,
     _logger.debug("Requesting chat history")
 
     if len(parameters_in) != 0:
-        interface.invalid_parameter_count(command_in,
-                                          parameters_in)
+        interface.invalid_parameter_count(command_in, parameters_in)
         return
 
     if server_address is None:
@@ -38,7 +37,7 @@ def _chat_history(command_in: MenuOptions,
         reply = request.urlopen(url, timeout=TIMEOUT).read()
     except error.URLError as e:
         _logger.warning("Unhandled exception in chat history: %s", e)
-        reply = e.reason
+        reply = e.reason.encode("ascii")
 
     try:
         messages = json.loads(reply)
@@ -54,8 +53,7 @@ def _claim_nickname(command_in: MenuOptions,
     _logger.debug("Claiming nickname")
 
     if len(parameters_in) != 1:
-        interface.invalid_parameter_count(command_in,
-                                          parameters_in)
+        interface.invalid_parameter_count(command_in, parameters_in)
         return None, None
 
     if server_address is None:
@@ -92,8 +90,7 @@ def _help(command_in: MenuOptions, parameters_in: Sequence[str]):
     _logger.debug("Handling help")
     command_help = None
     if len(parameters_in) not in [0, 1]:
-        interface.invalid_parameter_count(command_in,
-                                          parameters_in)
+        interface.invalid_parameter_count(command_in, parameters_in)
         return
     if len(parameters_in) == 1:
         try:
@@ -178,8 +175,7 @@ def _send_message(command_in: MenuOptions,
                   cookie_in: str):
     _logger.debug("Sending message")
     if len(parameters_in) == 0:
-        interface.invalid_parameter_count(command_in,
-                                          parameters_in)
+        interface.invalid_parameter_count(command_in, parameters_in)
         return
 
     if server_address is None:
@@ -219,8 +215,7 @@ def _send_message(command_in: MenuOptions,
 def _set_server(command_in: MenuOptions, parameters_in: Sequence[str]) -> Optional[str]:
     _logger.debug("Setting server address")
     if len(parameters_in) != 1:
-        interface.invalid_parameter_count(command_in,
-                                          parameters_in)
+        interface.invalid_parameter_count(command_in, parameters_in)
         return None
     server_ip = parameters_in[0]
     try:

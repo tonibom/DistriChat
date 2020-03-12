@@ -31,7 +31,6 @@ def claim_nick() -> Response:
         _logger.debug("Request not POST!")
         return error_resp
 
-    # nickname = request.args.get("nickname", "")
     nickname = request.form["nickname"]
     cookie = get_cookie(request.cookies)
 
@@ -130,7 +129,8 @@ def send_message() -> Response:
 @app.route("/join")
 def subscribe_channel() -> Response:
     # TODO: Could keep track of subscribed clients?
-    resp = make_response(str(port) + "\n")
+    # Returns the port to connect to
+    resp = make_response(str(port))
     return resp
 
 
