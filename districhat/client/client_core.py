@@ -12,7 +12,7 @@ from urllib import error, parse, request
 import interface
 from interface import MenuOptions
 
-SERVER_PORT = 97632
+SERVER_PORT = 31683
 TIMEOUT = 5.0
 
 _logger = logging.getLogger("CLIENT")

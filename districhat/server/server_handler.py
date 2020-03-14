@@ -17,7 +17,7 @@ import server_func as functions
 MESSAGE_QUEUE = functions.MessageQueue()
 publish_port = None
 publish_socket = None
-SERVER_PORT = 97632
+SERVER_PORT = 31683
 
 app = Flask("DistriChat")
 _logger = logging.getLogger("SERVER")
