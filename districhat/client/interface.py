@@ -167,6 +167,10 @@ def missing_server_address():
     print("\nNo server address set! Set the server address using the SERVER command.")
 
 
+def nickname_already_taken(reply_msg: str):
+    print(reply_msg)
+
+
 def nickname_claimed(reply_msg: str):
     print(reply_msg)
 

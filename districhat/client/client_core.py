@@ -82,6 +82,12 @@ def _claim_nickname(command_in: MenuOptions,
         _logger.warning("No cookie provided or crash before reading cookie")
         interface.unexpected_response(reply_msg)
         return None, None
+    if "already in use" in reply_msg:
+        _logger.info("Tried to claim nickname that was already in use")
+        interface.nickname_already_taken(reply_msg)
+        return cookie, None
+
+    _logger.info(reply_msg)
     interface.nickname_claimed(reply_msg)
     return cookie, nickname
 
@@ -151,10 +157,15 @@ def run():
             _chat_history(command_in, parameters_in, server_address)
 
         elif command_in == MenuOptions.CLAIM_NICKNAME:
-            cookie, nickname = _claim_nickname(command_in,
-                                               parameters_in,
-                                               server_address,
-                                               cookie)
+            cookie, new_nickname = _claim_nickname(command_in,
+                                                   parameters_in,
+                                                   server_address,
+                                                   cookie)
+            if new_nickname is not None:
+                # If the nickname was claimed successfully, store it.
+                # Otherwise the nickname is kept as it was: either
+                # None = unclaimed or the previously claimed nickname.
+                nickname = new_nickname
 
         elif command_in == MenuOptions.JOIN_SERVER:
             # _join_server(command_in, parameters_in)
